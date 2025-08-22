@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+*.venv
+venv/
+env/
+.env.local
+.env.*.local
+*.log
+
+# Flask instance folder
+instance/
+.webassets-cache
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Docker
+*.dockerignore
+*.log
+*.swp
+docker-compose.override.yml
+Dockerfile.test
+
+# GitHub Actions
+.github/workflows/*.yml
+
+# OS Files
+.DS_Store
+Thumbs.db
