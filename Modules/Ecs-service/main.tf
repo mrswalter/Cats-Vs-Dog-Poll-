@@ -16,7 +16,7 @@ resource "aws_ecs_task_definition" "poll_app" {
   }])
 }
 
-resource "aws_ecs_service" "poll_service" {
+resource "aws_ecs-service" "poll_service" {
   name            = "poll-service"
   cluster         = var.cluster_name
   task_definition = aws_ecs_task_definition.poll_app.arn

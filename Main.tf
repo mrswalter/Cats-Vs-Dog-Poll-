@@ -1,6 +1,6 @@
 module "ecs_cluster" {
   source       = "./modules/ecs-cluster"
-  cluster_name = "poll-cluster"
+  cluster_name = "poll_cluster"
 }
 
 module "load_balancer" {
@@ -13,7 +13,7 @@ module "ec2_launch" {
   security_group = module.load_balancer.security_group
 }
 
-module "ecs_service" {
+module "ecs-service" {
     #launch_type = "EC2"
   source         = "./modules/ecs-service"
   cluster_name   = module.ecs_cluster.cluster_name
@@ -23,7 +23,7 @@ module "ecs_service" {
   #app_image      = var.app_image
 }
 
-module "ecs" {
+module "ecs-service" {
   source     = "./modules/ecs"
   app_image  = var.app_image
 }
