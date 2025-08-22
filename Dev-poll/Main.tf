@@ -1,11 +1,13 @@
-provider "aws" {
-  region = var.region
+variable "app_image" {
+  description = "Docker image to deploy for the app"
+  type        = string
+  default     = "your-default-image:latest"
 }
 
-# module "ecs_cluster" {
-#   source       = "./modules/ecs-cluster"
-#   cluster_name = "poll-cluster"
-# }
+module "ecs_cluster" {
+  source       = "./modules/ecs-cluster"
+  cluster_name = "poll_cluster"
+}
 
 module "load_balancer" {
   source = "./modules/load-balancer"
@@ -17,8 +19,8 @@ module "ec2_launch" {
   security_group = module.load_balancer.security_group
 }
 
-module "ecs_service" {
-    launch_type = "EC2"
+module "ecs-service" {
+    #launch_type = "EC2"
   source         = "./modules/ecs-service"
   cluster_name   = module.ecs_cluster.cluster_name
   alb_target_arn = module.load_balancer.target_group_arn
@@ -27,7 +29,7 @@ module "ecs_service" {
   #app_image      = var.app_image
 }
 
-module "ecs" {
+module "ecs-service" {
   source     = "./modules/ecs"
   app_image  = var.app_image
 }
