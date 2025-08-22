@@ -1,6 +1,3 @@
-provider "aws" {
-  region = var.region
-}
 
 # module "ecs_cluster" {
 #   source       = "./modules/ecs-cluster"
