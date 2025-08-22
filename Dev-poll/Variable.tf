@@ -1,6 +1,6 @@
 variable "app_image" {
   type = string
-  default = "values.dockerhub.com/nginxdemos/hello"
+  description = "Docker image URI for the Poll app" #"values.dockerhub.com/nginxdemos/hello"
 }
 
 variable "region" {
