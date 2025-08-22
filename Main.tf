@@ -18,7 +18,7 @@ module "ec2_launch" {
 }
 
 module "ecs_service" {
-    launch_type = "EC2"
+    #launch_type = "EC2"
   source         = "./modules/ecs-service"
   cluster_name   = module.ecs_cluster.cluster_name
   alb_target_arn = module.load_balancer.target_group_arn
