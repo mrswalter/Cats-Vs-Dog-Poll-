@@ -61,3 +61,5 @@ Terraform configuration.
 - Make sure to replace any placeholder values in the Terraform files with your actual configuration details.
 - Review the Terraform plan output carefully before merging changes to the main branch to avoid unintended infrastructure modifications
 - Regularly update the Docker images and dependencies to maintain security and performance.
+
+all DOCKERHUB_TOKEN 
