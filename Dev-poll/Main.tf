@@ -27,3 +27,7 @@ module "ecs_service" {
   #app_image      = var.app_image
 }
 
+module "ecs" {
+  source     = "./modules/ecs"
+  app_image  = var.app_image
+}
