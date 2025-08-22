@@ -1,7 +1,7 @@
 variable "cluster_name" {
     type = string
     description = "name of the ecs cluster"
-    default = "ecs-cluster"
+    default = "ecs_cluster"
 }
 variable "alb_target_arn" {
     type = string

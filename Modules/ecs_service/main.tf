@@ -3,20 +3,23 @@ resource "aws_ecs_task_definition" "poll_app" {
   network_mode             = "bridge"
   requires_compatibilities = ["EC2"]
 
-  container_definitions = jsonencode([{
-    name      = "poll-app"
-    image     = var.app_image
-    cpu       = 256
-    memory    = 512
-    essential = true
-    portMappings = [{
-      containerPort = 5000
-      hostPort      = 5000
-    }]
-  }])
+container_definitions = jsonencode([
+    {
+      name      = "poll-app"
+      image     = var.app_image
+      essential = true
+      portMappings = [
+        {
+          containerPort = 80
+          hostPort      = 80
+        }
+      ]
+    }
+  ])
 }
 
-resource "aws_ecs-service" "poll_service" {
+
+resource "aws_ecs_service" "poll_service" {
   name            = "poll-service"
   cluster         = var.cluster_name
   task_definition = aws_ecs_task_definition.poll_app.arn
@@ -34,3 +37,4 @@ resource "aws_ecs-service" "poll_service" {
 
   depends_on = [aws_lb_listener.poll_listener]
 }
+
