@@ -5,7 +5,8 @@ variable "region" {
 }
 
 variable "app_image" {
-  description = "Docker image for the poll app"
+  description = "Docker image to deploy for the app"
   type        = string
+  default     = "your-default-image:latest"
 }
 
