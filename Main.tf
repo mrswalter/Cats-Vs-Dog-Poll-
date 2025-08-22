@@ -1,11 +1,7 @@
-provider "aws" {
-  region = var.region
+module "ecs_cluster" {
+  source       = "./modules/ecs-cluster"
+  cluster_name = "poll-cluster"
 }
-
-# module "ecs_cluster" {
-#   source       = "./modules/ecs-cluster"
-#   cluster_name = "poll-cluster"
-# }
 
 module "load_balancer" {
   source = "./modules/load-balancer"
