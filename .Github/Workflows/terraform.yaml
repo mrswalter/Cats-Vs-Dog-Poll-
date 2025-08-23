@@ -1,4 +1,4 @@
-name: Terraform CI/CD with ECR
+name: Terraform Deploy
 
 on:
   push:
@@ -6,14 +6,10 @@ on:
       - main
   workflow_dispatch:
     inputs:
-      action:
-        description: "Choose Terraform action"
-        required: true
-        default: "apply"
-        type: choice
-        options:
-          - apply
-          - destroy
+      destroy:
+        description: "Set to true to destroy infrastructure"
+        required: false
+        default: "false"
 
 jobs:
   terraform:
@@ -21,11 +17,12 @@ jobs:
 
     env:
       AWS_REGION: us-east-1
-      ECR_REPO: poll-app
+      ECR_REPOSITORY: poll-app
+      IMAGE_TAG: latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -34,31 +31,34 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      # ---------- Build & Push Docker Image ----------
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build, tag, and push image to ECR
-        if: github.event.inputs.action == 'apply'
+      - name: Build, Tag, and Push Image to ECR
         run: |
-          IMAGE_TAG=latest
-          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPO }}:$IMAGE_TAG
+          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
           echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
-
           docker build -t $IMAGE_URI .
           docker push $IMAGE_URI
 
-      - name: Setup Terraform
+      # ---------- Terraform ----------
+      - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
 
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Plan or Destroy
-        run: |
-          if [ "${{ github.event.inputs.action }}" == "destroy" ]; then
-            terraform destroy -auto-approve
-          else
-            terraform plan -var="app_image=$IMAGE_URI" -out=tfplan
-            terraform apply -auto-approve tfplan
-          fi
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event.inputs.destroy == 'false'
+        run: terraform apply -auto-approve tfplan
+
+      - name: Terraform Destroy
+        if: github.event.inputs.destroy == 'true'
+        run: terraform destroy -auto-approve
