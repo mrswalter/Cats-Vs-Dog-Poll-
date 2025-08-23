@@ -1,25 +1,30 @@
-name: Poll App CI/CD
+name: Terraform CI/CD with ECR
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       action:
-        description: "Type 'destroy' to confirm destruction of resources"
+        description: "Choose Terraform action"
         required: true
-        default: "cancel"
+        default: "apply"
+        type: choice
+        options:
+          - apply
+          - destroy
 
 jobs:
-  build:
-    name: Build and Push Docker Image
+  terraform:
     runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_dispatch' # skip build on destroy
+
+    env:
+      AWS_REGION: us-east-1
+      ECR_REPO: poll-app
 
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
@@ -27,38 +32,21 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and Push Docker image
+      - name: Build, tag, and push image to ECR
+        if: github.event.inputs.action == 'apply'
         run: |
-          IMAGE_REPO_NAME=poll-app
-          IMAGE_TAG=${{ github.sha }}
-          docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
-          docker tag $IMAGE_REPO_NAME:$IMAGE_TAG ${{ steps.login-ecr.outputs.registry }}/$IMAGE_REPO_NAME:$IMAGE_TAG
-          docker push ${{ steps.login-ecr.outputs.registry }}/$IMAGE_REPO_NAME:$IMAGE_TAG
+          IMAGE_TAG=latest
+          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPO }}:$IMAGE_TAG
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
 
-      - name: Save image URI
-        run: echo "IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/poll-app:${{ github.sha }}" >> $GITHUB_ENV
-
-  deploy:
-    name: Terraform Deploy
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name != 'workflow_dispatch'
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -66,41 +54,12 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Validate
-        run: terraform validate
-
-      - name: Terraform Plan & Apply
+      - name: Terraform Plan or Destroy
         run: |
-          terraform plan -var="app_image=${{ env.IMAGE_URI }}" -out=tfplan
-          terraform apply -auto-approve tfplan
-
-      - name: Output ALB DNS
-        run: terraform output -raw alb_dns
-
-  destroy:
-    name: Terraform Destroy
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve
-      - name: Confirm Destruction
-        run: echo "Resources have been destroyed."
-
+          if [ "${{ github.event.inputs.action }}" == "destroy" ]; then
+            terraform destroy -auto-approve
+          else
+            terraform plan -var="app_image=$IMAGE_URI" -out=tfplan
+            terraform apply -auto-approve tfplan
+          fi
 
