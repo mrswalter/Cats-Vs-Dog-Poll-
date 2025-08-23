@@ -1,3 +1,9 @@
+variable "app_image" {
+  description = "Docker image to deploy for the app"
+  type        = string
+  default = ""
+}
+
 module "ecs_cluster" {
   source       = "./modules/ecs_cluster"
   cluster_name = "poll_cluster"
