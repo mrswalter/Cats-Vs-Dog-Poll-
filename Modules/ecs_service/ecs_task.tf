@@ -1,26 +1,17 @@
-variable "app_image" {
-  description = "Docker image for the poll app"
-  type        = string
-}
-
-resource "aws_ecs_task_definition" "poll_app" {
+resource "aws_ecs_task_definition" "poll_task" {
   family                   = "poll-app-task"
   network_mode             = "awsvpc"
-  requires_compatibilities = ["EC2"] # since we removed Fargate
+  requires_compatibilities = ["EC2"]
   cpu                      = "256"
   memory                   = "512"
 
-  container_definitions = jsonencode([
-    {
-      name      = "poll-app"
-      image     = var.app_image
-      essential = true
-      portMappings = [
-        {
-          containerPort = 80
-          hostPort      = 80
-        }
-      ]
-    }
-  ])
+  container_definitions = jsonencode([{
+    name      = "poll-app"
+    image     = "123456789012.dkr.ecr.us-east-1.amazonaws.com/poll-app:latest"
+    essential = true
+    portMappings = [{
+      containerPort = 80
+      hostPort      = 80
+    }]
+  }])
 }
