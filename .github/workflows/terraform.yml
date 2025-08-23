@@ -71,7 +71,7 @@ jobs:
 
       - name: Terraform Plan & Apply
         run: |
-          terraform plan -var="app_image=${{ IMAGE_URI=514670561567.dkr.ecr.***.amazonaws.com/poll-app:307d8a09e87c3949ca587f9dfda8d5b4d9e949f9 }}" -out=tfplan
+          terraform plan -var="app_image=${{ env.IMAGE_URI }}" -out=tfplan
           terraform apply -auto-approve tfplan
 
       - name: Output ALB DNS
@@ -102,4 +102,5 @@ jobs:
         run: terraform destroy -auto-approve
       - name: Confirm Destruction
         run: echo "Resources have been destroyed."
+
 
